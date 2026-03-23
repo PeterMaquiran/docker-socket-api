@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  swarm-api:
+    image: docker-socket:latest   # replace with your built image
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - API_KEY=supersecret   # secure your API
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager   # must run on a Swarm manager node# 
