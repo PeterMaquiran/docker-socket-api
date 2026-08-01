@@ -18,7 +18,10 @@
   "license": "ISC",
   "dependencies": {
     "dockerode": "^4.0.7",
-    "express": "^5.1.0"
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "express": "^5.1.0",
+    "prettier": "^3.9.6"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.38",
