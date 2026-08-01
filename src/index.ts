@@ -1,20 +1,25 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import Docker from 'dockerode';
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
 const app = express();
 app.use(express.json());
 
-app.post('/update-service', async (req, res) => {
+interface UpdateServiceBody {
+  service?: string;
+  image?: string;
+}
+
+app.post('/update-service', async (req: Request<object, object, UpdateServiceBody>, res: Response) => {
   const { service, image } = req.body;
   if (!service || !image) return res.status(400).json({ error: 'Missing params' });
 
   try {
     console.log(`📥 Pulling image: ${image}`);
-    await new Promise((resolve, reject) => {
-      docker.pull(image, (err, stream) => {
+    await new Promise<unknown>((resolve, reject) => {
+      docker.pull(image, (err: Error | null, stream: NodeJS.ReadableStream) => {
         if (err) return reject(err);
-        docker.modem.followProgress(stream, (err, output) => {
+        docker.modem.followProgress(stream, (err: Error | null, output: unknown) => {
           if (err) return reject(err);
           console.log(`✅ Pulled image: ${image}`);
           resolve(output);
@@ -38,7 +43,7 @@ app.post('/update-service', async (req, res) => {
       },
     };
 
-    console.log("📦 New service spec (diffs applied):");
+    console.log('📦 New service spec (diffs applied):');
     console.dir(spec, { depth: 5 });
 
     console.log(`🚀 Updating service with version index: ${info.Version.Index}`);
@@ -47,13 +52,14 @@ app.post('/update-service', async (req, res) => {
       version: info.Version.Index,
     });
 
-    console.log("🔧 Docker API response:");
+    console.log('🔧 Docker API response:');
     console.dir(response, { depth: 5 });
 
     res.json({ message: `✅ Service ${service} updated and redeployed with ${image}` });
   } catch (err) {
-    console.error("❌ Error updating service:", err);
-    res.status(500).json({ error: err.message });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('❌ Error updating service:', err);
+    res.status(500).json({ error: message });
   }
 });
 
