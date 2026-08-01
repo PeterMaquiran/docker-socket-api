@@ -8,6 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,16 +21,18 @@
   "license": "ISC",
   "dependencies": {
     "dockerode": "^4.0.7",
-    "eslint": "^10.8.0",
-    "eslint-config-prettier": "^10.1.8",
-    "express": "^5.1.0",
-    "prettier": "^3.9.6"
+    "express": "^5.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/dockerode": "^3.3.38",
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.65.0"
   }
 }
