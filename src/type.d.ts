@@ -1,4 +1,3 @@
-export interface UpdateComposeBody {
-  service?: string
+export interface UpdateImageBody {
   image?: string
 }
