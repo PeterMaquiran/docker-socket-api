@@ -1,33 +1,23 @@
 import express, { type Request, type Response } from 'express'
 import Docker from 'dockerode'
-import { UpdateComposeBody } from './type.js'
+import { UpdateImageBody } from './type.js'
+import { pullImage } from './utils.js'
+
 const docker = new Docker({ socketPath: '/var/run/docker.sock' })
 const app = express()
 app.use(express.json())
 
-interface UpdateServiceBody {
-  service?: string
-  image?: string
-}
+type ServiceParams = { service: string }
 
 app.post(
-  '/update-service',
-  async (req: Request<object, object, UpdateServiceBody>, res: Response) => {
-    const { service, image } = req.body
-    if (!service || !image) return res.status(400).json({ error: 'Missing params' })
+  '/swarm/services/:service',
+  async (req: Request<ServiceParams, object, UpdateImageBody>, res: Response) => {
+    const { service } = req.params
+    const { image } = req.body
+    if (!image) return res.status(400).json({ error: 'Missing image' })
 
     try {
-      console.log(`📥 Pulling image: ${image}`)
-      await new Promise<unknown>((resolve, reject) => {
-        docker.pull(image, (err: Error | null, stream: NodeJS.ReadableStream) => {
-          if (err) return reject(err)
-          docker.modem.followProgress(stream, (err: Error | null, output: unknown) => {
-            if (err) return reject(err)
-            console.log(`✅ Pulled image: ${image}`)
-            resolve(output)
-          })
-        })
-      })
+      await pullImage(docker, image)
 
       console.log(`🔍 Inspecting service: ${service}`)
       const svc = docker.getService(service)
@@ -67,32 +57,20 @@ app.post(
 )
 
 app.post(
-  '/update-compose-service',
-  async (req: Request<object, object, UpdateComposeBody>, res: Response) => {
-    const { service, image } = req.body
+  '/compose/services/:service',
+  async (req: Request<ServiceParams, object, UpdateImageBody>, res: Response) => {
+    const { service } = req.params
+    const { image } = req.body
 
-    if (!service || !image) {
+    if (!image) {
       return res.status(400).json({
-        error: 'Missing params',
+        error: 'Missing image',
       })
     }
 
     try {
-      // Pull new image
-      console.log(`📥 Pulling ${image}`)
+      await pullImage(docker, image)
 
-      await new Promise((resolve, reject) => {
-        docker.pull(image, (err: Error | null, stream: NodeJS.ReadableStream) => {
-          if (err) return reject(err)
-
-          docker.modem.followProgress(stream, (err) => {
-            if (err) reject(err)
-            else resolve(true)
-          })
-        })
-      })
-
-      // Find compose container
       const containers = await docker.listContainers({
         all: true,
         filters: {
@@ -107,17 +85,13 @@ app.post(
       }
 
       const oldContainer = docker.getContainer(containers[0].Id)
-
       const inspect = await oldContainer.inspect()
 
       console.log(`♻️ Recreating ${inspect.Name}`)
 
-      // Stop old container
       await oldContainer.stop().catch(() => {})
-
       await oldContainer.remove()
 
-      // Create new container
       const newContainer = await docker.createContainer({
         name: inspect.Name.replace('/', ''),
         Image: image,
@@ -144,7 +118,5 @@ app.post(
     }
   },
 )
-
-app.listen(3000, () => console.log('API running on 3000'))
 
 app.listen(3000, () => console.log('API running on 3000'))
