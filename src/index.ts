@@ -1,11 +1,13 @@
 import express, { type Request, type Response } from 'express'
 import Docker from 'dockerode'
 import { UpdateImageBody } from './type.js'
-import { pullImage } from './utils.js'
+import { pullImage } from './utils/pullImage.js'
+import { authenticateApiKey } from './middleware/auth.js'
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' })
 const app = express()
 app.use(express.json())
+app.use(authenticateApiKey)
 
 type ServiceParams = { service: string }
 
@@ -15,6 +17,10 @@ app.post(
     const { service } = req.params
     const { image } = req.body
     if (!image) return res.status(400).json({ error: 'Missing image' })
+
+    if (!image.startsWith('registry.tvone.ao/')) {
+      throw new Error('invalid image')
+    }
 
     try {
       await pullImage(docker, image)

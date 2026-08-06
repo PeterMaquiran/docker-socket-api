@@ -9,6 +9,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - API_KEY=supersecret # secure your API
+      # 🔒 DENY everything by default
+      - CONTAINERS: 0
+      - IMAGES: 0
+      - NETWORKS: 0
+      - VOLUMES: 0
+      - EXEC: 0
+      - AUTH: 0
+      - BUILD: 0
+      - COMMIT: 0
+      # ✅ Allow ONLY what you need
+      - SERVICES: 1
+      - TASKS: 1
+
     deploy:
       mode: replicated
       replicas: 1
