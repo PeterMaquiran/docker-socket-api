@@ -26,7 +26,7 @@ steps:
         from_secret: docker_socket_api_token
     commands:
       - >
-        curl -X POST https://docker.tvone.ao/compose/services/portfolio_docker-socket-api
+        curl -X POST https://docker.tvone.ao/compose/services/docker-socket-api
         -H "Authorization: Bearer $DOCKER_SOCKET_API_TOKEN"
         -H "Content-Type: application/json"
         -d "{\"image\":\"registry.tvone.ao/docker-socket-api:latest\"}"
