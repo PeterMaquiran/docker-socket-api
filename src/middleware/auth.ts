@@ -6,6 +6,14 @@ export const authenticateApiKey = (req: Request, res: Response, next: NextFuncti
 
   const EXPECTED_KEY = process.env.API_SECRET_KEY
 
+  if (!EXPECTED_KEY) {
+    console.error('API_SECRET_KEY environment variable is not configured')
+
+    return res.status(500).json({
+      error: 'Internal Server Error',
+    })
+  }
+
   if (!apiKey || apiKey !== EXPECTED_KEY) {
     return res.status(401).json({ error: 'Unauthorized: Invalid or missing API Key' })
   }

@@ -1,3 +1,4 @@
+//import 'dotenv/config' // 👈 Place as the FIRST import
 import express, { type Request, type Response } from 'express'
 import Docker from 'dockerode'
 import { UpdateImageBody } from './type.js'
