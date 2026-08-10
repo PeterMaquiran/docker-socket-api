@@ -9,6 +9,10 @@ steps:
     settings:
       registry: registry.tvone.ao
       repo: registry.tvone.ao/docker-socket-api
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
       tags:
         - latest
       dockerfile: Dockerfile
@@ -28,7 +32,21 @@ steps:
         -d "{\"image\":\"registry.tvone.ao/docker-socket-api:latest\"}"
 
 ---
-# 3. Secret Reference
+# Secret References
+kind: secret
+name: docker_username
+get:
+  path: docker_username
+  name: docker_username
+
+---
+kind: secret
+name: docker_password
+get:
+  path: docker_password
+  name: docker_password
+
+---
 kind: secret
 name: docker_socket_api_token
 get:
