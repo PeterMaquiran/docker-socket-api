@@ -1,0 +1,36 @@
+kind: pipeline
+type: docker
+name: deploy-pipeline
+
+steps:
+  # 1. Build and push Next.js Portfolio Docker image
+  - name: build-and-push
+    image: plugins/docker
+    settings:
+      registry: registry.tvone.ao
+      repo: registry.tvone.ao/docker-socket-api
+      tags:
+        - latest
+      dockerfile: Dockerfile
+      context: .
+
+  # 2. Trigger service update via Docker Socket Proxy API
+  - name: update-via-docker-socket
+    image: curlimages/curl:latest
+    environment:
+      DOCKER_SOCKET_API_TOKEN:
+        from_secret: docker_socket_api_token
+    commands:
+      - >
+        curl -X POST https://docker-socket.tvone.ao/swarm/services/portfolio_docker-socket-api
+        -H "Authorization: Bearer $DOCKER_SOCKET_API_TOKEN"
+        -H "Content-Type: application/json"
+        -d "{\"image\":\"registry.tvone.ao/docker-socket-api:latest\"}"
+
+---
+# 3. Secret Reference
+kind: secret
+name: docker_socket_api_token
+get:
+  path: docker_socket_api_token
+  name: docker_socket_api_token
