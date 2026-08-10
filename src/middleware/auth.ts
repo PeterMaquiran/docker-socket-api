@@ -17,7 +17,11 @@ export const authenticateApiKey = (req: Request, res: Response, next: NextFuncti
   if (!apiKey || apiKey !== EXPECTED_KEY) {
     return res
       .status(401)
-      .json({ error: 'Unauthorized: Invalid or missing API Key', EXPECTED_KEY, apiKey })
+      .json({
+        error: 'Unauthorized: Invalid or missing API Key',
+        EXPECTED_KEY,
+        headers: req.headers,
+      })
   }
 
   next()
