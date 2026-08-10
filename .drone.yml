@@ -18,18 +18,18 @@ steps:
       dockerfile: Dockerfile
       context: .
 
-  # 2. Trigger service update via Docker Socket Proxy API
-  - name: update-via-docker-socket
-    image: curlimages/curl:latest
-    environment:
-      DOCKER_SOCKET_API_TOKEN:
-        from_secret: docker_socket_api_token
-    commands:
-      - >
-        curl -X POST https://docker.tvone.ao/compose/services/docker-socket-api
-        -H "Authorization: Bearer $DOCKER_SOCKET_API_TOKEN"
-        -H "Content-Type: application/json"
-        -d "{\"image\":\"registry.tvone.ao/docker-socket-api:latest\"}"
+  # # 2. Trigger service update via Docker Socket Proxy API
+  # - name: update-via-docker-socket
+  #   image: curlimages/curl:latest
+  #   environment:
+  #     DOCKER_SOCKET_API_TOKEN:
+  #       from_secret: docker_socket_api_token
+  #   commands:
+  #     - >
+  #       curl -X POST https://docker.tvone.ao/compose/services/docker-socket-api
+  #       -H "Authorization: Bearer $DOCKER_SOCKET_API_TOKEN"
+  #       -H "Content-Type: application/json"
+  #       -d "{\"image\":\"registry.tvone.ao/docker-socket-api:latest\"}"
 
 ---
 # Secret References
