@@ -2,7 +2,8 @@
 import express, { type Request, type Response } from 'express'
 import Docker from 'dockerode'
 import { UpdateImageBody } from './type.js'
-import { pullImage } from './utils/pullImage.js'
+import { ImagePullError, pullImage } from './utils/pullImage.js'
+import { getRegistryAuth } from './utils/registryAuth.js'
 import { authenticateApiKey } from './middleware/auth.js'
 
 const docker = new Docker({ socketPath: '/var/run/docker.sock' })
@@ -20,7 +21,7 @@ app.post(
     if (!image) return res.status(400).json({ error: 'Missing image' })
 
     if (!image.startsWith('registry.tvone.ao/')) {
-      throw new Error('invalid image')
+      return res.status(400).json({ error: 'invalid image' })
     }
 
     try {
@@ -46,9 +47,11 @@ app.post(
       console.dir(spec, { depth: 5 })
 
       console.log(`🚀 Updating service with version index: ${info.Version.Index}`)
+      const authconfig = getRegistryAuth(image)
       const response = await svc.update({
         ...spec,
         version: info.Version.Index,
+        ...(authconfig ? { authconfig } : {}),
       })
 
       console.log('🔧 Docker API response:')
@@ -56,9 +59,7 @@ app.post(
 
       res.json({ message: `✅ Service ${service} updated and redeployed with ${image}` })
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.error('❌ Error updating service:', err)
-      res.status(500).json({ error: message })
+      respondError(res, err, 'Error updating service')
     }
   },
 )
@@ -115,15 +116,23 @@ app.post(
         message: `✅ ${service} updated to ${image}`,
       })
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-
-      console.error(err)
-
-      res.status(500).json({
-        error: message,
-      })
+      respondError(res, err, 'Error updating compose service')
     }
   },
 )
+
+function respondError(res: Response, err: unknown, logLabel: string) {
+  if (err instanceof ImagePullError) {
+    console.error(`❌ ${logLabel}:`, err.message)
+    return res.status(err.statusCode).json({
+      error: err.message,
+      code: err.code,
+    })
+  }
+
+  const message = err instanceof Error ? err.message : String(err)
+  console.error(`❌ ${logLabel}:`, err)
+  return res.status(500).json({ error: message })
+}
 
 app.listen(3000, () => console.log('API running on 3000'))
